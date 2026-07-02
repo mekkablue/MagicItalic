@@ -16,9 +16,79 @@
 
 from __future__ import division, print_function, unicode_literals
 import objc
-from GlyphsApp import Glyphs, GSLayer
+from GlyphsApp import Glyphs, GSLayer, GSSMOOTH, GSOFFCURVE
 from GlyphsApp.plugins import FilterWithDialog
 from AppKit import NSPoint
+
+
+def straightenBCPs(layer):
+	# ported from mekkablue’s RealignHandles filter plug-in
+
+	def triplet(n1, n2, n3):
+		return (*n1.position, *n2.position, *n3.position)
+
+	def closestPointOnLine(P, A, B):
+		# vector of line AB
+		AB = NSPoint(B.x - A.x, B.y - A.y)
+		# vector from point A to point P
+		AP = NSPoint(P.x - A.x, P.y - A.y)
+		# dot product of AB and AP
+		dotProduct = AB.x * AP.x + AB.y * AP.y
+		ABsquared = AB.x**2 + AB.y**2
+		t = dotProduct / ABsquared
+		x = A.x + t * AB.x
+		y = A.y + t * AB.y
+		return NSPoint(x, y)
+
+	def ortho(n1, n2):
+		xDiff = n1.x - n2.x
+		yDiff = n1.y - n2.y
+		# must not have the same coordinates,
+		# and either vertical or horizontal:
+		if xDiff != yDiff and xDiff * yDiff == 0.0:
+			return True
+		return False
+
+	handleCount = 0
+	for p in layer.paths:
+		for n in p.nodes:
+			if n.connection != GSSMOOTH:
+				continue
+			nn, pn = n.nextNode, n.prevNode
+			if all((nn.type == GSOFFCURVE, pn.type == GSOFFCURVE)):
+				# surrounding points are BCPs
+				smoothen, center, opposite = None, None, None
+				for handle in (nn, pn):
+					if ortho(handle, n):
+						center = n
+						opposite = handle
+						smoothen = nn if nn != handle else pn
+						oldPos = triplet(smoothen, center, opposite)
+						p.setSmooth_withCenterNode_oppositeNode_(smoothen, center, opposite)
+						if oldPos != triplet(smoothen, center, opposite):
+							handleCount += 1
+						break
+				if smoothen == center == opposite is None:
+					oldPos = triplet(n, nn, pn)
+					n.position = closestPointOnLine(n.position, nn, pn)
+					if oldPos != triplet(n, nn, pn):
+						handleCount += 1
+			elif n.type != GSOFFCURVE and (nn.type, pn.type).count(GSOFFCURVE) == 1:
+				# only one of the surrounding points is a BCP
+				center = n
+				if nn.type == GSOFFCURVE:
+					smoothen = nn
+					opposite = pn
+				elif pn.type == GSOFFCURVE:
+					smoothen = pn
+					opposite = nn
+				else:
+					continue  # should never occur
+				oldPos = triplet(smoothen, center, opposite)
+				p.setSmooth_withCenterNode_oppositeNode_(smoothen, center, opposite)
+				if oldPos != triplet(smoothen, center, opposite):
+					handleCount += 1
+	return handleCount
 
 
 class MagicItalic(FilterWithDialog):
@@ -34,6 +104,7 @@ class MagicItalic(FilterWithDialog):
 	correctThicknessField = objc.IBOutlet()
 	hStemField = objc.IBOutlet()
 	vStemField = objc.IBOutlet()
+	realignHandlesCheckbox = objc.IBOutlet()
 
 	@objc.python_method
 	def settings(self):
@@ -60,6 +131,7 @@ class MagicItalic(FilterWithDialog):
 		Glyphs.registerDefault('com.mekkablue.MagicItalic.correctThickness', 100)
 		Glyphs.registerDefault('com.mekkablue.MagicItalic.hStem', "*")
 		Glyphs.registerDefault('com.mekkablue.MagicItalic.vStem', "*")
+		Glyphs.registerDefault('com.mekkablue.MagicItalic.realignHandles', True)
 
 		# Set value of text field
 		self.italicAngleField.setStringValue_(Glyphs.defaults['com.mekkablue.MagicItalic.italicAngle'])
@@ -68,6 +140,7 @@ class MagicItalic(FilterWithDialog):
 		self.correctThicknessField.setStringValue_(Glyphs.defaults['com.mekkablue.MagicItalic.correctThickness'])
 		self.hStemField.setStringValue_(Glyphs.defaults['com.mekkablue.MagicItalic.hStem'])
 		self.vStemField.setStringValue_(Glyphs.defaults['com.mekkablue.MagicItalic.vStem'])
+		self.realignHandlesCheckbox.setState_(Glyphs.defaults['com.mekkablue.MagicItalic.realignHandles'])
 
 		# Set focus to text field
 		self.italicAngleField.becomeFirstResponder()
@@ -103,6 +176,11 @@ class MagicItalic(FilterWithDialog):
 		Glyphs.defaults['com.mekkablue.MagicItalic.vStem'] = sender.stringValue()
 		self.update()
 
+	@objc.IBAction
+	def setRealignHandles_(self, sender):
+		Glyphs.defaults['com.mekkablue.MagicItalic.realignHandles'] = bool(sender.state())
+		self.update()
+
 	# Actual filter
 	@objc.python_method
 	def filter(self, layer, inEditView, customParameters):
@@ -136,6 +214,10 @@ class MagicItalic(FilterWithDialog):
 			vStem = customParameters['vStem']
 		else:
 			vStem = Glyphs.defaults['com.mekkablue.MagicItalic.vStem']
+		if "realignHandles" in customParameters:
+			realignHandles = customParameters['realignHandles']
+		else:
+			realignHandles = Glyphs.defaults['com.mekkablue.MagicItalic.realignHandles']
 
 		# secret italification
 		def firstStem(font, h=True):
@@ -181,9 +263,12 @@ class MagicItalic(FilterWithDialog):
 			False,
 			)
 
+		if realignHandles:
+			straightenBCPs(layer)
+
 	@objc.python_method
 	def generateCustomParameter(self):
-		return f"{self.__class__.__name__}; italicAngle: {Glyphs.defaults['com.mekkablue.MagicItalic.italicAngle']}; correctContrast: {Glyphs.defaults['com.mekkablue.MagicItalic.correctContrast']}; correctShape: {Glyphs.defaults['com.mekkablue.MagicItalic.correctShape']}; correctThickness: {Glyphs.defaults['com.mekkablue.MagicItalic.correctThickness']}; hStem: {Glyphs.defaults['com.mekkablue.MagicItalic.hStem']}; vStem: {Glyphs.defaults['com.mekkablue.MagicItalic.vStem']};"
+		return f"{self.__class__.__name__}; italicAngle: {Glyphs.defaults['com.mekkablue.MagicItalic.italicAngle']}; correctContrast: {Glyphs.defaults['com.mekkablue.MagicItalic.correctContrast']}; correctShape: {Glyphs.defaults['com.mekkablue.MagicItalic.correctShape']}; correctThickness: {Glyphs.defaults['com.mekkablue.MagicItalic.correctThickness']}; hStem: {Glyphs.defaults['com.mekkablue.MagicItalic.hStem']}; vStem: {Glyphs.defaults['com.mekkablue.MagicItalic.vStem']}; realignHandles: {Glyphs.defaults['com.mekkablue.MagicItalic.realignHandles']};"
 
 	@objc.python_method
 	def __file__(self):
