@@ -13,14 +13,13 @@
                 <outlet property="dialog" destination="1" id="xxr-Cg-7Fj"/>
                 <outlet property="hStemField" destination="b1H-HM-gPI" id="21i-vs-Pix"/>
                 <outlet property="italicAngleField" destination="vfg-c5-0Yw" id="pTj-Jf-QM3"/>
-                <outlet property="realignHandlesCheckbox" destination="rHc-k9-Bx1" id="rHc-k9-Ot1"/>
                 <outlet property="vStemField" destination="F1A-Ic-WfI" id="k5F-yQ-IM3"/>
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <customView id="1">
-            <rect key="frame" x="0.0" y="0.0" width="301" height="218"/>
+            <rect key="frame" x="0.0" y="0.0" width="301" height="191"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="vfg-c5-0Yw" customClass="GSSteppingTextField">
@@ -152,16 +151,6 @@
                         <action selector="setVStem:" target="-2" id="3vd-6d-2mJ"/>
                     </connections>
                 </textField>
-                <button translatesAutoresizingMaskIntoConstraints="NO" id="rHc-k9-Bx1">
-                    <rect key="frame" x="58" y="20" width="180" height="18"/>
-                    <buttonCell key="cell" type="check" title="Realign Handles" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="rHc-k9-Cl1">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="setRealignHandles:" target="-2" id="rHc-k9-Ac1"/>
-                    </connections>
-                </button>
             </subviews>
             <constraints>
                 <constraint firstItem="TkV-ab-NEf" firstAttribute="leading" secondItem="rSA-CF-Oqi" secondAttribute="trailing" constant="8" symbolic="YES" id="0Rr-Yk-nPG"/>
@@ -199,9 +188,7 @@
                 <constraint firstItem="2Pr-K2-7gA" firstAttribute="leading" secondItem="g1s-jy-k3k" secondAttribute="leading" id="pya-zA-w33"/>
                 <constraint firstItem="vfg-c5-0Yw" firstAttribute="trailing" secondItem="506-GW-Fe7" secondAttribute="trailing" id="sMQ-hz-EwW"/>
                 <constraint firstItem="rSA-CF-Oqi" firstAttribute="baseline" secondItem="TkV-ab-NEf" secondAttribute="baseline" id="upQ-P8-7Cj"/>
-                <constraint firstAttribute="bottom" secondItem="rHc-k9-Bx1" secondAttribute="bottom" constant="20" symbolic="YES" id="uzN-Lw-qBL"/>
-                <constraint firstItem="rHc-k9-Bx1" firstAttribute="top" secondItem="F1A-Ic-WfI" secondAttribute="bottom" constant="9" id="rHc-k9-Tp1"/>
-                <constraint firstItem="rHc-k9-Bx1" firstAttribute="leading" secondItem="1" secondAttribute="leading" constant="20" symbolic="YES" id="rHc-k9-Ld1"/>
+                <constraint firstAttribute="bottom" secondItem="F1A-Ic-WfI" secondAttribute="bottom" constant="20" symbolic="YES" id="uzN-Lw-qBL"/>
                 <constraint firstItem="TkV-ab-NEf" firstAttribute="leading" secondItem="b1H-HM-gPI" secondAttribute="leading" id="wjd-rS-4Nn"/>
                 <constraint firstItem="lvc-E3-mAB" firstAttribute="top" secondItem="Zax-hy-jpg" secondAttribute="bottom" constant="9" id="xiF-CG-dWI"/>
                 <constraint firstItem="lvc-E3-mAB" firstAttribute="baseline" secondItem="tyn-i5-ehZ" secondAttribute="baseline" id="xwR-7P-ksU"/>
