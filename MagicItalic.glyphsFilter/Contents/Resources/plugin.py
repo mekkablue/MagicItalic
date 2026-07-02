@@ -104,7 +104,6 @@ class MagicItalic(FilterWithDialog):
 	correctThicknessField = objc.IBOutlet()
 	hStemField = objc.IBOutlet()
 	vStemField = objc.IBOutlet()
-	realignHandlesCheckbox = objc.IBOutlet()
 
 	@objc.python_method
 	def settings(self):
@@ -131,7 +130,6 @@ class MagicItalic(FilterWithDialog):
 		Glyphs.registerDefault('com.mekkablue.MagicItalic.correctThickness', 100)
 		Glyphs.registerDefault('com.mekkablue.MagicItalic.hStem', "*")
 		Glyphs.registerDefault('com.mekkablue.MagicItalic.vStem', "*")
-		Glyphs.registerDefault('com.mekkablue.MagicItalic.realignHandles', True)
 
 		# Set value of text field
 		self.italicAngleField.setStringValue_(Glyphs.defaults['com.mekkablue.MagicItalic.italicAngle'])
@@ -140,7 +138,6 @@ class MagicItalic(FilterWithDialog):
 		self.correctThicknessField.setStringValue_(Glyphs.defaults['com.mekkablue.MagicItalic.correctThickness'])
 		self.hStemField.setStringValue_(Glyphs.defaults['com.mekkablue.MagicItalic.hStem'])
 		self.vStemField.setStringValue_(Glyphs.defaults['com.mekkablue.MagicItalic.vStem'])
-		self.realignHandlesCheckbox.setState_(Glyphs.defaults['com.mekkablue.MagicItalic.realignHandles'])
 
 		# Set focus to text field
 		self.italicAngleField.becomeFirstResponder()
@@ -176,11 +173,6 @@ class MagicItalic(FilterWithDialog):
 		Glyphs.defaults['com.mekkablue.MagicItalic.vStem'] = sender.stringValue()
 		self.update()
 
-	@objc.IBAction
-	def setRealignHandles_(self, sender):
-		Glyphs.defaults['com.mekkablue.MagicItalic.realignHandles'] = bool(sender.state())
-		self.update()
-
 	# Actual filter
 	@objc.python_method
 	def filter(self, layer, inEditView, customParameters):
@@ -214,10 +206,6 @@ class MagicItalic(FilterWithDialog):
 			vStem = customParameters['vStem']
 		else:
 			vStem = Glyphs.defaults['com.mekkablue.MagicItalic.vStem']
-		if "realignHandles" in customParameters:
-			realignHandles = customParameters['realignHandles']
-		else:
-			realignHandles = Glyphs.defaults['com.mekkablue.MagicItalic.realignHandles']
 
 		# secret italification
 		def firstStem(font, h=True):
@@ -263,12 +251,11 @@ class MagicItalic(FilterWithDialog):
 			False,
 			)
 
-		if realignHandles:
-			straightenBCPs(layer)
+		straightenBCPs(layer)
 
 	@objc.python_method
 	def generateCustomParameter(self):
-		return f"{self.__class__.__name__}; italicAngle: {Glyphs.defaults['com.mekkablue.MagicItalic.italicAngle']}; correctContrast: {Glyphs.defaults['com.mekkablue.MagicItalic.correctContrast']}; correctShape: {Glyphs.defaults['com.mekkablue.MagicItalic.correctShape']}; correctThickness: {Glyphs.defaults['com.mekkablue.MagicItalic.correctThickness']}; hStem: {Glyphs.defaults['com.mekkablue.MagicItalic.hStem']}; vStem: {Glyphs.defaults['com.mekkablue.MagicItalic.vStem']}; realignHandles: {Glyphs.defaults['com.mekkablue.MagicItalic.realignHandles']};"
+		return f"{self.__class__.__name__}; italicAngle: {Glyphs.defaults['com.mekkablue.MagicItalic.italicAngle']}; correctContrast: {Glyphs.defaults['com.mekkablue.MagicItalic.correctContrast']}; correctShape: {Glyphs.defaults['com.mekkablue.MagicItalic.correctShape']}; correctThickness: {Glyphs.defaults['com.mekkablue.MagicItalic.correctThickness']}; hStem: {Glyphs.defaults['com.mekkablue.MagicItalic.hStem']}; vStem: {Glyphs.defaults['com.mekkablue.MagicItalic.vStem']};"
 
 	@objc.python_method
 	def __file__(self):
